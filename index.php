@@ -7,7 +7,18 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Righteous&family=Inter:wght@400;700;900&display=swap" rel="stylesheet">
     <style>
-        body { font-family: 'Inter', sans-serif; background-color: #0f172a; }
+        /* Setting up a fixed, cover background with a dark overlay for readability */
+        body { 
+            font-family: 'Inter', sans-serif; 
+            background-color: #0f172a; /* Fallback color */
+            /* Dark Overlay (rgba(0,0,0,0.85)) on top of the image for high contrast */
+            background-image: linear-gradient(rgba(0, 0, 0, 0.85), rgba(0, 0, 0, 0.85)), 
+                              /* Updated to reference the local asset path: /slots/images/background1.png */
+                              url('images/background1.png'); 
+            background-size: cover;
+            background-position: center;
+            background-attachment: fixed; /* Ensures background stays put when scrolling */
+        }
         .font-display { font-family: 'Righteous', cursive; }
         .dot { display: flex; align-items: center; justify-content: center; }
         
@@ -33,12 +44,16 @@
     </div>
     
 <script>
-    // --- Simulation Constants ---
+    // --- Simulation Constants (UPDATED) ---
     const INITIAL_BALANCE = 500;
     const TOKEN_NAME = 'BNCL'; // Big Nickel Token
     const MIN_BET = 0.00001;
     const MAX_BET = 10.00;
-    const BNCL_WALLET_ADDRESS = "0xBNCL...DemoWalletAddress...42"; // Simulated Wallet Address
+    
+    // User-provided Addresses
+    const BNCL_CONTRACT_ADDRESS = "0x67aC2BB295F533D9E7f62Cf5B5Dc755E8bBb8A60"; 
+    const BNCL_WALLET_ADDRESS = "0x67aC2BB295F533D9E7f62Cf5B5Dc755E8bBb8A60"; 
+    
     const ETRANSFER_EMAIL = "etransfer@bignickelcasino.io"; // Simulated E-transfer email
     const SIMULATED_TOPUP_AMOUNT = 500; // Amount added when "Add Funds" is clicked
 
@@ -221,7 +236,7 @@
                         <button onclick="${setBetFunc}('${amount}')" 
                             class="text-xs px-2 py-1 rounded-full font-bold transition 
                             ${parseFloat(amount) === parseFloat(currentBet) ? 'bg-yellow-500 text-slate-900' : 'bg-slate-600 hover:bg-slate-500 text-white'}">
-                            ${amount}
+                            ${parseFloat(amount) == MAX_BET ? 'Max' : (parseFloat(amount) == MIN_BET ? 'Min' : amount)}
                         </button>
                     `).join('')}
                 </div>
@@ -258,6 +273,7 @@
             ? `<p class="text-3xl font-bold mb-4 ${resultTextColor}">${state.rouletteResult} Wins!</p>` 
             : '';
             
+        // NOTE: The roulette image path is still relative to the 'images' folder.
         const wheelHtml = state.isGameActive 
             ? `<img src="images/roulette-wheel.png" alt="Roulette Wheel" class="w-48 h-48 mx-auto mb-6 animate-spin-slow rounded-full"/>` // Spinning image
             : `<img src="images/roulette-wheel.png" alt="Roulette Wheel" class="w-48 h-48 mx-auto mb-6 rounded-full"/>`; // Static image
@@ -300,7 +316,7 @@
         </div>`;
     };
 
-    // New render function for the "Add Funds" page
+    // New render function for the "Add Funds" page (UPDATED)
     const renderTokenPurchase = () => {
         return `<div class="text-center p-2">
             <h2 class="text-3xl font-display text-cyan-400 mb-6">Buy ${TOKEN_NAME} Tokens</h2>
@@ -310,18 +326,18 @@
                 <!-- Token Purchase via QuickSwap (Simulated) -->
                 <div>
                     <h3 class="font-bold text-white mb-1">1. Purchase BNCL Token (Simulated)</h3>
-                    <p class="text-sm text-slate-400 mb-2">In a real scenario, you would buy the BNCL token on a decentralized exchange like QuickSwap.</p>
+                    <p class="text-sm text-slate-400 mb-2">In a real scenario, you would buy the BNCL token on a decentralized exchange like QuickSwap using this contract address.</p>
                     <div class="bg-slate-800 p-3 rounded-lg font-mono text-sm text-green-400 break-all">
-                        <span class="font-semibold text-white">Contract Address:</span> 0xBNCL...DemoContract...42
+                        <span class="font-semibold text-white">Token Contract Address:</span> ${BNCL_CONTRACT_ADDRESS}
                     </div>
                 </div>
 
                 <!-- Token Transfer (Simulated) -->
                 <div>
                     <h3 class="font-bold text-white mb-1">2. Transfer to Game Wallet (Simulated)</h3>
-                    <p class="text-sm text-slate-400 mb-2">After purchase, you would send your BNCL tokens to this game wallet address to credit your account.</p>
+                    <p class="text-sm text-slate-400 mb-2">After purchase, you would send your BNCL tokens to this game wallet deposit address to credit your account.</p>
                     <div class="bg-slate-800 p-3 rounded-lg font-mono text-sm text-green-400 break-all">
-                        <span class="font-semibold text-white">Your Deposit Address:</span> ${BNCL_WALLET_ADDRESS}
+                        <span class="font-semibold text-white">BNCL Deposit Address:</span> ${BNCL_WALLET_ADDRESS}
                     </div>
                 </div>
 
@@ -332,6 +348,14 @@
                     <div class="bg-slate-800 p-3 rounded-lg font-mono text-sm text-green-400 break-all">
                         <span class="font-semibold text-white">E-transfer Email:</span> ${ETRANSFER_EMAIL}
                     </div>
+                </div>
+
+                <!-- MANDATORY Transaction Note (NEW) -->
+                <div class="bg-red-900/40 p-3 rounded-lg border border-red-500 shadow-xl">
+                    <h3 class="font-extrabold text-lg text-red-400 mb-1">🔥 IMPORTANT: TRANSACTION NOTE 🔥</h3>
+                    <p class="text-white text-sm">
+                        You **MUST** include your **session username** in the memo, note, or reference field of the token transfer or E-transfer. This is the only way to ensure your game account is credited correctly.
+                    </p>
                 </div>
                 
                 <p class="text-red-400 text-xs italic pt-2">Disclaimer: This is a demo. Clicking "Add Funds" below will instantly credit your account with ${SIMULATED_TOPUP_AMOUNT} ${TOKEN_NAME} for demonstration purposes only. No real money or crypto transaction will occur.</p>
