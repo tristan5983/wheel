@@ -2,8 +2,24 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
+    <!-- Ensure fluid width for mobile viewing -->
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Big Nickel Slots</title>
+    <title>Big Nickel Slots | Play Slots, Roulette, and Dice Games</title>
+
+    <!-- SEO Meta Tags -->
+    <meta name="description" content="Play Big Nickel Slots! Your premier destination for high-stakes casino simulations including slots, roulette, and dice. Experience the thrill of crypto-based gambling (BNCL Token) in a fun, risk-free environment.">
+    <meta name="keywords" content="crypto casino, online slots, roulette game, dice game, BNCL token, simulation, gambling, high stakes, slots machine">
+    <link rel="canonical" href="https://www.bignickelcasino.io/index.php"> <!-- Replace with actual domain -->
+    
+    <!-- Open Graph / Social Media Tags -->
+    <meta property="og:title" content="Big Nickel Slots Casino - Win Big with BNCL!">
+    <meta property="og:description" content="Your premier destination for high-stakes casino simulations including slots, roulette, and dice. Experience the thrill of crypto-based gambling (BNCL Token) in a fun, risk-free environment.">
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://www.bignickelcasino.io/index.php">
+    <meta property="og:image" content="https://www.bignickelcasino.io/images/social-preview.jpg"> <!-- Placeholder for a visually engaging image -->
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:creator" content="@BigNickelSlots"> <!-- Replace with actual Twitter handle -->
+
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Righteous&family=Inter:wght@400;700;900&display=swap" rel="stylesheet">
     <style>
@@ -22,12 +38,25 @@
         .font-display { font-family: 'Righteous', cursive; }
         .dot { display: flex; align-items: center; justify-content: center; }
         
+        /* Slot Spin Animation */
         @keyframes spin-fast { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
         .animate-spin-fast { animation: spin-fast 0.05s linear infinite; }
 
-        /* Roulette Spin Animation - Apply directly to the image */
+        /* Roulette Spin Animation */
         @keyframes spin-slow { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
-        .animate-spin-slow { animation: spin-slow 1s linear infinite; animation-timing-function: linear; } /* Added linear timing */
+        .animate-spin-slow { animation: spin-slow 1s linear infinite; animation-timing-function: linear; }
+
+        /* Dice Roll Animation */
+        @keyframes dice-roll-spin {
+            0% { transform: translate(0, 0) rotate(0deg); }
+            25% { transform: translate(5px, -5px) rotate(90deg); }
+            50% { transform: translate(-5px, 5px) rotate(180deg); }
+            75% { transform: translate(5px, 5px) rotate(270deg); }
+            100% { transform: translate(0, 0) rotate(360deg); }
+        }
+        .dice-rolling {
+            animation: dice-roll-spin 0.2s cubic-bezier(0.4, 0.0, 0.6, 1.0) infinite;
+        }
 
         /* Custom scrollbar for token info block */
         .token-info::-webkit-scrollbar { width: 6px; }
@@ -36,16 +65,17 @@
         .token-info::-webkit-scrollbar-thumb:hover { background: #0ea5e9; }
     </style>
 </head>
-<body class="min-h-screen p-4 sm:p-8 flex items-start justify-center">
+<!-- Reduced overall padding on small screens for maximum content area -->
+<body class="min-h-screen p-2 sm:p-4 flex items-start justify-center">
     <?php require 'config.php'; ?>
 
-    <div id="app-container" class="w-full max-w-lg mx-auto bg-slate-800 rounded-2xl shadow-2xl p-6 border-4 border-cyan-400/80">
+    <div id="app-container" class="w-full max-w-lg mx-auto bg-slate-800 rounded-2xl shadow-2xl p-4 sm:p-6 border-4 border-cyan-400/80">
         <div class="text-center p-8 text-xl text-cyan-400">Loading Application...</div>
     </div>
     
 <script>
-    // --- Simulation Constants (UPDATED) ---
-    const INITIAL_BALANCE = 500;
+    // --- Simulation Constants ---
+    const INITIAL_BALANCE = 5; 
     const TOKEN_NAME = 'BNCL'; // Big Nickel Token
     const MIN_BET = 0.00001;
     const MAX_BET = 10.00;
@@ -89,7 +119,7 @@
     function showLogin() {
         appContainer.innerHTML = `
             <div class="text-center p-8 text-white">
-                <h2 class="text-5xl font-display text-yellow-500 mb-8">BIG NICKEL SLOTS</h2>
+                <h2 class="text-4xl sm:text-5xl font-display text-yellow-500 mb-8">BIG NICKEL SLOTS</h2>
                 <p class="text-red-400 mb-4">You must log in to play.</p>
                 <input id="username" placeholder="Username" class="w-full p-3 rounded mb-3 bg-slate-700 text-white">
                 <input id="password" type="password" placeholder="Password" class="w-full p-3 rounded mb-4 bg-slate-700 text-white">
@@ -190,9 +220,11 @@
         };
         const dots = [];
         for(let i = 0; i < 11; i++) {
-            dots.push(`<div class="w-2 h-2 rounded-full ${patterns[value].includes(i) ? 'bg-black' : 'opacity-0'}"></div>`);
+            // Increased dot size for better mobile visibility
+            dots.push(`<div class="w-2.5 h-2.5 rounded-full ${patterns[value].includes(i) ? 'bg-black' : 'opacity-0'}"></div>`);
         }
-        return `<div class="grid grid-cols-3 gap-1 p-2 bg-white w-12 h-12 rounded-lg shadow-lg">${dots.join('')}</div>`;
+        // Adjusted dice size: w-14 h-14 (56px) for mobile, grid-cols-3, gap-1, p-3 for better dot spacing
+        return `<div class="dice-face grid grid-cols-3 gap-1 p-3 bg-white w-14 h-14 rounded-xl shadow-lg">${dots.join('')}</div>`;
     };
 
     const renderGameButton = (name) => {
@@ -228,8 +260,9 @@
             <div class="flex flex-col space-y-3">
                 <div class="flex justify-center items-center space-x-2">
                     <label class="text-white text-lg font-semibold">Bet (${TOKEN_NAME}):</label>
+                    <!-- Kept width fixed but ensured good padding for touch input -->
                     <input type="number" min="${MIN_BET}" max="${MAX_BET}" step="0.00001" value="${currentBet.toFixed(5)}" onchange="${setBetFunc}(this.value)" 
-                           class="w-32 p-2 rounded bg-slate-700 text-cyan-300 text-center font-mono">
+                           class="w-28 sm:w-32 p-2 rounded bg-slate-700 text-cyan-300 text-center font-mono">
                 </div>
                 <div class="flex justify-center space-x-2">
                     ${betOptions.map(amount => `
@@ -273,10 +306,10 @@
             ? `<p class="text-3xl font-bold mb-4 ${resultTextColor}">${state.rouletteResult} Wins!</p>` 
             : '';
             
-        // NOTE: The roulette image path is still relative to the 'images' folder.
+        // Responsive size for the roulette wheel
         const wheelHtml = state.isGameActive 
-            ? `<img src="images/roulette-wheel.png" alt="Roulette Wheel" class="w-48 h-48 mx-auto mb-6 animate-spin-slow rounded-full"/>` // Spinning image
-            : `<img src="images/roulette-wheel.png" alt="Roulette Wheel" class="w-48 h-48 mx-auto mb-6 rounded-full"/>`; // Static image
+            ? `<img src="images/roulette-wheel.png" alt="Roulette Wheel" class="w-40 h-40 sm:w-48 sm:h-48 mx-auto mb-6 animate-spin-slow rounded-full"/>` // Spinning image
+            : `<img src="images/roulette-wheel.png" alt="Roulette Wheel" class="w-40 h-40 sm:w-48 sm:h-48 mx-auto mb-6 rounded-full"/>`; // Static image
             
         return `<div class="text-center">
             ${resultHtml}
@@ -289,18 +322,25 @@
                 <button onclick="handleBetRoulette('Black')" ${state.isGameActive || state.balance < state.rouletteBetAmount ? 'disabled' : ''} 
                     class="flex-1 bg-black text-white border-2 border-white/50 hover:bg-gray-800 py-3 rounded-xl font-bold text-lg disabled:opacity-50 transition shadow-lg shadow-gray-900/50">Bet Black</button>
             </div>
-            <p class="text-sm text-cyan-400 mt-4">Winning color pays 2x your bet.</p>
+            <p class="text-sm text-cyan-400 mt-4">Winning color pays 1.5x your bet (0.5x profit).</p>
         </div>`;
     };
 
     const renderDiceRoll = () => {
+        const isRolling = state.isGameActive;
+        // Apply dice-rolling class when game is active
+        const diceClass = isRolling ? 'dice-rolling' : '';
+
         const resultHtml = state.diceRollResult 
             ? `<div class="flex justify-center space-x-4 mb-4">
-                 ${DiceFace(state.diceRollResult[0])}
-                 ${DiceFace(state.diceRollResult[1])}
+                 ${DiceFace(state.diceRollResult[0]).replace('dice-face', `dice-face ${diceClass}`)}
+                 ${DiceFace(state.diceRollResult[1]).replace('dice-face', `dice-face ${diceClass}`)}
                </div>
                <p class="text-3xl font-bold text-yellow-500 mb-4">Total: ${state.diceRollResult[0] + state.diceRollResult[1]}</p>`
-            : `<p class="text-6xl text-cyan-400 mb-6 h-20">🎲🎲</p>`;
+            : `<p class="text-6xl text-cyan-400 mb-6 h-20">
+                <span class="${diceClass}">🎲</span>
+                <span class="${diceClass}">🎲</span>
+               </p>`;
             
         return `<div class="text-center">
             ${resultHtml}
@@ -312,11 +352,11 @@
                 <button onclick="rollDice('Low')" ${state.isGameActive || state.balance < state.diceBetAmount ? 'disabled' : ''}
                     class="flex-1 bg-red-600 text-white hover:bg-red-700 py-3 rounded-xl font-bold text-lg disabled:opacity-50 transition shadow-lg shadow-red-900/50">Guess Low (6-)</button>
             </div>
-            <p class="text-sm text-cyan-400 mt-4">Winning guess pays 2x your bet.</p>
+            <p class="text-sm text-cyan-400 mt-4">Winning guess pays 1.5x your bet (0.5x profit).</p>
         </div>`;
     };
 
-    // New render function for the "Add Funds" page (UPDATED)
+    // New render function for the "Add Funds" page
     const renderTokenPurchase = () => {
         return `<div class="text-center p-2">
             <h2 class="text-3xl font-display text-cyan-400 mb-6">Buy ${TOKEN_NAME} Tokens</h2>
@@ -350,7 +390,7 @@
                     </div>
                 </div>
 
-                <!-- MANDATORY Transaction Note (NEW) -->
+                <!-- MANDATORY Transaction Note -->
                 <div class="bg-red-900/40 p-3 rounded-lg border border-red-500 shadow-xl">
                     <h3 class="font-extrabold text-lg text-red-400 mb-1">🔥 IMPORTANT: TRANSACTION NOTE 🔥</h3>
                     <p class="text-white text-sm">
@@ -441,9 +481,7 @@
             else if (r1 === '🍒') { profit = BET_AMOUNT * 5; }
             else if (r1 === '🍋') { profit = BET_AMOUNT * 4; }
         } 
-        else if (r1 === r2) {
-             profit = BET_AMOUNT * 1; // Double your bet (return bet + profit)
-        }
+        // Removed the r1 === r2 win condition to substantially reduce winning odds.
 
         if (profit > 0) {
             const totalWin = profit + BET_AMOUNT;
@@ -463,13 +501,13 @@
         try {
             await deductBet(BET_AMOUNT);
             setTimeout(async () => {
-                const roll = Math.floor(Math.random() * 37); // 0-36
+                const roll = Math.floor(Math.random() * 37) + 1; // 0-36
                 const resultColor = (roll === 0) ? 'Green' : (roll % 2 === 0) ? 'Red' : 'Black';
                 const youWon = (resultColor.toUpperCase() === color.toUpperCase());
                 
                 let winAmount = 0;
                 if (youWon) {
-                    winAmount = 2 * BET_AMOUNT; // 2x payout (returns original bet + profit)
+                    winAmount = 1.5 * BET_AMOUNT; // Reduced payout from 2x to 1.5x (0.5x profit)
                     await addWin(winAmount);
                 }
 
@@ -501,7 +539,7 @@
 
                 let winAmount = 0;
                 if (win) {
-                    winAmount = 2 * BET_AMOUNT; // 2x payout (returns original bet + profit)
+                    winAmount = 1.5 * BET_AMOUNT; // Reduced payout from 2x to 1.5x (0.5x profit)
                     await addWin(winAmount);
                 }
 
@@ -529,7 +567,8 @@
         }
 
         const header = `<header class="text-center mb-6">
-            <h1 class="text-4xl font-display text-yellow-500 border-b-4 border-yellow-500 inline-block pb-1 tracking-widest">
+            <!-- Responsive text sizing: text-3xl on mobile, text-4xl on larger screens -->
+            <h1 class="text-3xl sm:text-4xl font-display text-yellow-500 border-b-4 border-yellow-500 inline-block pb-1 tracking-widest">
                 BIG NICKEL SLOTS
             </h1>
             <div class="flex items-center justify-center space-x-4 mt-4">
