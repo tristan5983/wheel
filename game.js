@@ -26,6 +26,12 @@ const CATEGORIES = [
     { id: 'poker', name: 'Poker', icon: 'spade' }
 ];
 
+// Roulette wheel segments (Simplified representation: 0 is Green, even is Red, odd is Black)
+const ROULETTE_SEGMENTS = {
+    0: 'Green', 2: 'Red', 14: 'Red', 35: 'Red', 23: 'Red', 4: 'Red', 16: 'Red', 33: 'Red', 21: 'Red', 6: 'Red', 18: 'Red', 31: 'Red', 19: 'Red', 8: 'Red', 12: 'Red', 29: 'Red', 25: 'Red', 10: 'Red', 27: 'Red',
+    1: 'Black', 13: 'Black', 36: 'Black', 24: 'Black', 3: 'Black', 15: 'Black', 34: 'Black', 22: 'Black', 5: 'Black', 17: 'Black', 32: 'Black', 20: 'Black', 7: 'Black', 11: 'Black', 30: 'Black', 26: 'Black', 9: 'Black', 28: 'Black'
+};
+
 // --- State and DOM ---
 const SOUNDS = {
     spin: document.getElementById('spin-sound'),
@@ -38,13 +44,13 @@ const appContainer = document.getElementById('app-container');
 
 let state = {
     userId: null,
-    balance: 5.00,
+    balance: 50.00, // Increased default balance for easier testing
     isLoading: true,
     error: null,
     isAuthReady: false,
-    currentPage: 'lobby', // NEW: Navigation state
-    currentGame: 'slots', // The currently loaded game logic
-    lobbyCategory: 'all', // NEW: Lobby filter state
+    currentPage: 'lobby', 
+    currentGame: 'slots', 
+    lobbyCategory: 'all', 
     isGameActive: false,
     slotsReels: ['?', '?', '?'],
     slotsMessage: 'Place your bet and spin!',
@@ -52,6 +58,7 @@ let state = {
     rouletteResult: null,
     rouletteMessage: 'Place your bet on Red or Black.',
     rouletteBetAmount: 5.00,
+    rouletteRollValue: 0, // NEW: For animation control
     diceRollResult: null,
     diceMessage: 'Guess High (7+) or Low (6-).',
     diceBetAmount: 2.50
@@ -66,8 +73,6 @@ const updateState = (newState) => {
 };
 
 // --- Animations and Effects ---
-// ... (Confetti, Jackpot, etc. functions remain the same) ...
-
 const triggerConfetti = () => {
     confetti({ particleCount: 200, spread: 70, origin: { y: 0.6 } });
     setTimeout(() => confetti({ particleCount: 100, angle: 60, spread: 55, origin: { x: 0 } }), 100);
@@ -87,10 +92,7 @@ const showJackpotCelebration = (amount) => {
 
 
 // --- API / Authentication ---
-// ... (Login, Register, Logout, Balance functions remain the same) ...
-
 async function showLogin() {
-    // Styling updated to match the new dark blue background
     appContainer.innerHTML = `
         <div class="p-8 text-white bg-black/30 min-h-screen">
             <div class="max-w-md mx-auto">
@@ -171,7 +173,7 @@ async function addWin(amount) {
 }
 
 
-// --- LOBBY RENDERERS ---
+// --- LOBBY RENDERERS (Unchanged from previous update) ---
 
 // Helper function to render Lucide Icons
 const Icon = (name, classes = 'w-4 h-4') => {
@@ -365,15 +367,20 @@ const renderLobby = () => {
 };
 
 
-// --- GAME RENDERERS (Updated) ---
+// --- GAME RENDERERS ---
 const renderLoading = () => `<div class="text-center p-8 text-xl text-cyan-400">Connecting...</div>`;
 const renderError = (msg) => `<div class="text-center p-8 text-red-500">Error: ${msg}</div>`;
 
 // Dice Face
 const DiceFace = (value) => {
     const patterns = {1: [5], 2: [0,10], 3: [0,5,10], 4: [0,2,8,10], 5: [0,2,5,8,10], 6: [0,2,3,7,8,10]};
-    const dots = Array.from({length: 11}, (_, i) => `<div class="w-2.5 h-2.5 rounded-full ${patterns[value] && patterns[value].includes(i) ? 'bg-black' : 'opacity-0'}"></div>`).join('');
-    return `<div class="dice-face dot grid grid-cols-3 gap-1 p-3 bg-white w-14 h-14 rounded-xl shadow-lg">${dots}</div>`;
+    // Ensure value is between 1 and 6 for rendering
+    const safeValue = Math.max(1, Math.min(6, value || 1));
+    const dots = Array.from({length: 11}, (_, i) => `<div class="w-2.5 h-2.5 rounded-full ${patterns[safeValue] && patterns[safeValue].includes(i) ? 'bg-black' : 'opacity-0'}"></div>`).join('');
+    // NEW: Dice will have no animation class unless actively rolling
+    return `<div class="dice-face dot grid grid-cols-3 gap-1 p-3 bg-white w-14 h-14 rounded-xl shadow-lg">
+        ${dots}
+    </div>`;
 };
 
 // Bet Selector
@@ -411,7 +418,9 @@ const createReelStrip = (finalSymbol, reelIndex) => {
     const reelClass = isSpinning ? 'animate-spin-fast' : '';
     const winClass = state.isGameActive === false && finalSymbol !== '?' && state.slotsMessage.includes('Win') ? 'win-flash' : '';
     
-    return `<div id="reel-${reelIndex}" class="slot-reel-strip text-yellow-500 ${reelClass} ${winClass}">${html}</div>`;
+    // We add an inline style to reset the position after the animation, 
+    // but the actual stopping position is calculated and applied in JS
+    return `<div id="reel-${reelIndex}" class="slot-reel-strip text-yellow-500 ${reelClass} ${winClass}" style="transform: translateY(0);"></div>`;
 };
 
 // Render Games
@@ -438,9 +447,21 @@ const renderSlotMachine = () => {
 const renderRoulette = () => {
     const resultColor = state.rouletteResult === 'Red' ? 'text-red-500' : state.rouletteResult === 'Black' ? 'text-white' : 'text-green-500';
     const resultHtml = state.rouletteResult ? `<p class="text-3xl font-bold mb-4 ${resultColor}">${state.rouletteResult} Wins!</p>` : '';
-    const wheelHtml = state.isGameActive 
-        ? `<img src="images/roulette_wheel.svg" class="w-40 h-40 sm:w-48 sm:h-48 mx-auto mb-6 bg-slate-700 rounded-full animate-spin-slow" alt="Roulette Wheel Spinning">` 
-        : `<img src="images/roulette_wheel.svg" class="w-40 h-40 sm:w-48 sm:h-48 mx-auto mb-6 bg-slate-700 rounded-full" alt="Roulette Wheel">`;
+    
+    // NEW: Apply the transformation style based on state.rouletteRollValue for stop position
+    const wheelStyle = state.isGameActive 
+        ? 'transform: rotate(0deg); animation: spin-slow 6s linear infinite;' // Start spinning
+        : `transform: rotate(${state.rouletteRollValue}deg); transition: transform 2s cubic-bezier(0.2, 0.8, 0.4, 1);`; // Stop at the final angle
+
+    const wheelHtml = `
+        <div class="w-40 h-40 sm:w-48 sm:h-48 mx-auto mb-6 bg-slate-700 rounded-full overflow-hidden shadow-2xl relative">
+            <img id="roulette-wheel" src="images/roulette_wheel.svg" 
+                 class="w-full h-full" 
+                 style="${wheelStyle}" 
+                 alt="Roulette Wheel">
+            <div class="absolute top-0 left-1/2 -ml-1 w-2 h-4 bg-yellow-400 transform -translate-x-1/2"></div>
+        </div>
+    `;
     
     return `<div class="text-center p-4 sm:p-6 bg-slate-800 rounded-2xl shadow-2xl border-4 border-cyan-400/80 max-w-lg mx-auto">
         <h2 class="text-3xl font-display text-yellow-500 mb-6">Roulette Royale</h2>
@@ -458,11 +479,21 @@ const renderRoulette = () => {
 
 const renderDiceRoll = () => {
     const isRolling = state.isGameActive;
-    const diceClass = isRolling ? 'dice-rolling' : '';
     
-    const resultHtml = state.diceRollResult && state.diceRollResult[0] !== 0 ? 
-        `<div class="flex justify-center space-x-4 mb-4">${DiceFace(state.diceRollResult[0]).replace('dice-face', `dice-face ${diceClass}`)}${DiceFace(state.diceRollResult[1]).replace('dice-face', `dice-face ${diceClass}`)}</div><p class="text-3xl font-bold text-yellow-500 mb-4">Total: ${state.diceRollResult[0] + state.diceRollResult[1]}</p>` : 
-        `<p class="text-6xl text-cyan-400 mb-6"><span class="${diceClass}">🎲</span> <span class="${diceClass}">🎲</span></p>`;
+    // Get the dice faces, defaulting to 1s if not set
+    const d1 = state.diceRollResult ? state.diceRollResult[0] : 1;
+    const d2 = state.diceRollResult ? state.diceRollResult[1] : 1;
+
+    const total = state.diceRollResult ? d1 + d2 : '';
+    
+    // Dice faces are rendered, and the rolling class is applied to them directly for animation
+    const resultHtml = `
+        <div class="flex justify-center space-x-4 mb-4">
+            <div class="dice-container ${isRolling ? 'dice-rolling' : ''}">${DiceFace(d1)}</div>
+            <div class="dice-container ${isRolling ? 'dice-rolling' : ''}">${DiceFace(d2)}</div>
+        </div>
+        ${total ? `<p class="text-3xl font-bold text-yellow-500 mb-4">Total: ${total}</p>` : ''}
+    `;
         
     return `<div class="text-center p-4 sm:p-6 bg-slate-800 rounded-2xl shadow-2xl border-4 border-cyan-400/80 max-w-lg mx-auto">
         <h2 class="text-3xl font-display text-yellow-500 mb-6">Dice Roll</h2>
@@ -499,7 +530,7 @@ window.simulateTopUp = async () => {
     updateState({isLoading: true});
     try {
         await addWin(SIMULATED_TOPUP);
-        updateState({currentPage: 'lobby', lobbyCategory: 'all'}); // Navigate back to lobby after top-up
+        updateState({currentPage: 'lobby', lobbyCategory: 'all'}); 
     } catch (e) {
         updateState({error: 'Top-up failed.'});
     }
@@ -514,28 +545,47 @@ window.setDiceBet = (v) => { const val = Math.round(parseFloat(v) || MIN_BET); u
 
 // NEW Navigation Handlers
 window.setCurrentPage = (page) => updateState({currentPage: page, isGameActive: false, rouletteResult: null, diceRollResult: null});
-window.setCurrentGame = (gameId) => updateState({currentPage: 'game', currentGame: gameId, isGameActive: false, rouletteResult: null, diceRollResult: null});
+window.setCurrentGame = (gameId) => updateState({currentPage: 'game', currentGame: gameId, isGameActive: false, rouletteResult: null, diceRollResult: null, rouletteRollValue: 0});
 
-// Slot Logic (includes the crash fix)
+// Slot Logic (CRASH FIX INCLUDED)
 const stopReel = (reelElement, finalSymbol, delay) => {
     return new Promise(resolve => {
         setTimeout(() => {
             const reelStrip = reelElement.querySelector('.slot-reel-strip');
-            if (!reelStrip) return resolve();
+            if (!reelStrip) {
+                console.error("Reel strip element not found.");
+                return resolve();
+            }
 
             const targetSymbolIndex = SYMBOLS.indexOf(finalSymbol);
             const fullStripCount = 4 * SYMBOLS.length;
             const stopIndex = fullStripCount + targetSymbolIndex; 
             const targetY = stopIndex * SYMBOL_HEIGHT;
+            const TRANSITION_DURATION = 1200; 
 
+            // Apply the final stopping transition
             reelStrip.style.transition = `transform 1.2s cubic-bezier(0.2, 0.8, 0.4, 1)`; 
             reelStrip.style.transform = `translateY(-${targetY}px)`;
             reelStrip.classList.remove('animate-spin-fast');
 
+            // Wait for the transition to finish OR use a fallback timer
+            let resolved = false;
+
+            const resolveOnce = () => {
+                if (!resolved) {
+                    resolved = true;
+                    resolve();
+                }
+            };
+
+            // a) Transitionend Listener (preferred method)
             reelStrip.addEventListener('transitionend', function handler() {
                 reelStrip.removeEventListener('transitionend', handler);
-                resolve();
+                resolveOnce();
             }, { once: true });
+
+            // b) Timeout Fallback (safety net)
+            setTimeout(resolveOnce, TRANSITION_DURATION + 100); 
 
         }, delay);
     });
@@ -558,22 +608,28 @@ window.spinSlots = async () => {
             SYMBOLS[Math.floor(Math.random() * SYMBOLS.length)]
         ];
         
-        // Second update (CRASH FIX): Re-render with final reels set, 
-        // but 'isGameActive' keeps the CSS animation running until the next update.
+        // Second update: Re-render with final reels set.
         updateState({slotsReels: finalReels});
 
         const reelElements = document.querySelectorAll('.slot-reel-container');
         
+        if (reelElements.length !== 3) {
+            throw new Error("Could not find all three reel elements in the DOM.");
+        }
+
+        // Start the staggered stop animations
         await Promise.all([
             stopReel(reelElements[0], finalReels[0], 500),
             stopReel(reelElements[1], finalReels[1], 1000),
             stopReel(reelElements[2], finalReels[2], 1500)
         ]);
         
+        // Determine Win and Final State Update
         await determineSlotWin(finalReels, bet);
         
     } catch (e) {
-        updateState({isGameActive: false, slotsMessage: 'Insufficient funds!'});
+        console.error("Spin Slots Error:", e);
+        updateState({isGameActive: false, slotsMessage: e.message === 'Insufficient funds' ? 'Insufficient funds!' : 'Spin failed. Try again.'});
     }
 };
 
@@ -605,49 +661,81 @@ const determineSlotWin = async (reels, bet) => {
     }
 };
 
+// --- Roulette Logic (Refined Animation) ---
 window.handleBetRoulette = async (color) => {
     const bet = state.rouletteBetAmount;
     if (state.isGameActive || state.balance < bet) return;
     playSound('spin');
-    updateState({isGameActive: true, rouletteResult: null, rouletteMessage: `Bet ${bet.toFixed(2)} ${TOKEN_NAME} on ${color}...`});
+    // Start with animation class, reset roll value
+    updateState({isGameActive: true, rouletteRollValue: 0, rouletteResult: null, rouletteMessage: `Bet ${bet.toFixed(2)} ${TOKEN_NAME} on ${color}...`});
+    
     try {
         await deductBet(bet);
+
+        // Calculate result after 2 seconds
         setTimeout(async () => {
-            const roll = Math.floor(Math.random() * 37);
-            const result = roll === 0 ? 'Green' : roll % 2 === 0 ? 'Red' : 'Black';
-            const won = result.toUpperCase() === color.toUpperCase();
-            let winAmount = 0;
-            if (won) {
-                winAmount = bet * 1.5; 
-                await addWin(winAmount);
-                playSound('win');
-            }
-            updateState({isGameActive: false, rouletteResult: result, rouletteMessage: won ? `Win ${winAmount.toFixed(2)} ${TOKEN_NAME}!` : `Lost on ${result}.`});
-        }, 6000);
+            const roll = Math.floor(Math.random() * 37); // 0 to 36
+            const result = ROULETTE_SEGMENTS[roll];
+            
+            // Calculate final rotation angle (360/37 = 9.73 degrees per number)
+            // We spin 5 full rotations (1800 deg) plus the stop angle.
+            // The wheel in the SVG is oriented such that 0 is at the top/marker.
+            // We must reverse the angle as the wheel spins clockwise (positive degrees)
+            const anglePerSegment = 360 / 37; 
+            const stopAngle = roll * anglePerSegment;
+            // Total rotation: 5 full spins + where it needs to stop (reversed)
+            const finalRotation = 5 * 360 + (360 - stopAngle); 
+
+            // Update state with the final rotation value to trigger the CSS stop transition
+            updateState({rouletteRollValue: finalRotation}); 
+
+            // Wait for the CSS transition (2 seconds set in renderRoulette)
+            setTimeout(async () => {
+                const won = result.toUpperCase() === color.toUpperCase();
+                let winAmount = 0;
+                if (won) {
+                    winAmount = bet * 1.5; 
+                    await addWin(winAmount);
+                    playSound('win');
+                }
+                // Final state update
+                updateState({isGameActive: false, rouletteResult: result, rouletteMessage: won ? `Win ${winAmount.toFixed(2)} ${TOKEN_NAME}!` : `Lost on ${result}.`});
+            }, 2000); // Wait for the transition to finish
+            
+        }, 3000); // 3 seconds of fast spin before the stop transition starts
     } catch (e) {
         updateState({isGameActive: false, rouletteMessage: 'Insufficient funds!'});
     }
 };
 
+// --- Dice Logic (Refined Animation) ---
 window.rollDice = async (guess) => {
     const bet = state.diceBetAmount;
     if (state.isGameActive || state.balance < bet) return;
-    updateState({isGameActive: true, diceMessage: 'Rolling...', diceRollResult: [0, 0]}); 
+    
+    // Start animation: sets isGameActive=true which triggers the CSS dice-rolling class
+    updateState({isGameActive: true, diceMessage: 'Rolling...', diceRollResult: null}); 
+    
     try {
         await deductBet(bet);
+        
+        // Wait for the roll animation to look good
         setTimeout(async () => {
             const d1 = Math.floor(Math.random() * 6) + 1;
             const d2 = Math.floor(Math.random() * 6) + 1;
             const total = d1 + d2;
             const won = (guess === 'High' && total >= 7) || (guess === 'Low' && total <= 6);
             let winAmount = 0;
+            
             if (won) {
                 winAmount = bet * 1.5; 
                 await addWin(winAmount);
                 playSound('win');
             }
+            
+            // Stop animation: sets isGameActive=false and updates diceRollResult
             updateState({isGameActive: false, diceRollResult: [d1, d2], diceMessage: won ? `Win ${winAmount.toFixed(2)} ${TOKEN_NAME}!` : `Total ${total}. Lost.`});
-        }, 2000);
+        }, 2000); // Total roll duration
     } catch (e) {
         updateState({isGameActive: false, diceMessage: 'Insufficient funds!'});
     }
